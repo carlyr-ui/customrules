@@ -1,0 +1,8 @@
+# Claude Code tooling
+.claude/
+
+# macOS
+.DS_Store
+src_v2/
+styles_v2.css
+Custom Rule Creation v2.html
