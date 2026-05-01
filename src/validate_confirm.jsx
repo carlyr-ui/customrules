@@ -141,18 +141,29 @@ function ValidateStage({ draft, definition, onBack, onPassed, counterStyle = "do
                     </div>
                     <div className="muted small" style={{marginTop:4}}>by {displayNote.clinician}</div>
                   </div>
-                  {!passed && (
-                    <div style={{marginLeft:"auto", display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4}}>
-                      <button className="btn btn-ghost btn-sm" onClick={skipNote}>
-                        <Icon name="refresh" size={12} /> Skip note
-                      </button>
-                      {skipCount >= 2 && (
-                        <div style={{fontSize:11, color:"var(--warn-700)", textAlign:"right", maxWidth:200}}>
-                          <Icon name="info" size={10} /> Skips don't count toward validation.
-                        </div>
-                      )}
+                  <div style={{marginLeft:"auto", display:"flex", alignItems:"flex-start", gap:14, flexShrink:0}}>
+                    {/* Highlight legend */}
+                    <div style={{display:"flex", gap:10, fontSize:11, color:"var(--ink-500)", paddingTop:2}}>
+                      <span style={{display:"flex", alignItems:"center", gap:4}}>
+                        <mark className="hit" style={{padding:"0 3px", fontSize:11}}>●</mark> Match found
+                      </span>
+                      <span style={{display:"flex", alignItems:"center", gap:4}}>
+                        <mark className="miss" style={{padding:"0 3px", fontSize:11}}>●</mark> Issue flagged
+                      </span>
                     </div>
-                  )}
+                    {!passed && (
+                      <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4}}>
+                        <button className="btn btn-ghost btn-sm" onClick={skipNote}>
+                          <Icon name="refresh" size={12} /> Skip note
+                        </button>
+                        {skipCount >= 2 && (
+                          <div style={{fontSize:11, color:"var(--warn-700)", textAlign:"right", maxWidth:200}}>
+                            <Icon name="info" size={10} /> Skips don't count toward validation.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="card-body" style={{padding:0}}>
                   <div className="note-preview" style={{borderRadius:0, border:"none", maxHeight:"none"}}>
@@ -471,7 +482,11 @@ function ActivateStage({ draft, definition, onBack, onActivate, onSave }) {
       {/* Surfaces */}
       <div className="section-h">
         <h3>Where should it run?</h3>
-        <span className="sub">Select at least one surface. You can change this later from the rule's side panel.</span>
+        <span className="sub">
+          {(draft.surfaces?.length > 0)
+            ? <>Pre-filled from your selections in Define. Update if needed, or change later from the rules list.</>
+            : <>Select at least one surface. You can change this later from the rule's side panel.</>}
+        </span>
       </div>
       <div className="card" style={{marginBottom:20}}>
         <div className="card-body" style={{display:"flex", flexDirection:"column", gap:10}}>

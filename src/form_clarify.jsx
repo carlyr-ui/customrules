@@ -108,12 +108,15 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
       <div className="page-header">
         <div>
           <h1>Define your rule</h1>
-          <p className="sub">Describe the check the engine should run. We'll sharpen the exact logic with you in the next step.</p>
+          <p className="sub">Describe the check Eleos should run. We'll sharpen the exact logic in the next step.</p>
         </div>
         <div className="actions">
-          <button className="btn btn-brand" disabled={!canContinue} onClick={onNext}>
-            Continue to Clarify <Icon name="arrowRight" size={14} />
-          </button>
+          <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4}}>
+            <button className="btn btn-brand" disabled={!canContinue} onClick={onNext}>
+              Continue <Icon name="arrowRight" size={14} />
+            </button>
+            <div style={{fontSize:11, color:"var(--ink-400)"}}>Next: set pass / fail logic</div>
+          </div>
         </div>
       </div>
 
@@ -340,7 +343,7 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
           <div style={{display:"flex", gap:8}}>
             <button className="btn btn-ghost" onClick={onBack}>Save draft &amp; exit</button>
             <button className="btn btn-brand" disabled={!canContinue} onClick={onNext}>
-              Continue to Clarify <Icon name="arrowRight" size={14} />
+              Continue <Icon name="arrowRight" size={14} />
             </button>
           </div>
           {!canContinue && (touched.title || touched.description || touched.passCriteria) && (
@@ -366,30 +369,30 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
 const CLARIFY_QUESTIONS = [
   {
     id: "specificity",
-    label: "Pass threshold",
-    prompt: "The engine considers this rule satisfied when…",
+    label: "What counts as a pass?",
+    prompt: "This rule is satisfied when the note contains…",
     options: [
       { v: "any",        label: "Any mention counts",              detail: "Even a brief or vague reference passes." },
-      { v: "measurable", label: "Must be specific and measurable", detail: "Needs a named target, metric, or quantifiable indicator.", recommended: true },
-      { v: "smart",      label: "Full SMART format required",      detail: "Specific, measurable, achievable, relevant, and time-bound." },
+      { v: "measurable", label: "Something specific and measurable", detail: "Must include a named target, metric, or quantifiable indicator.", recommended: true },
+      { v: "smart",      label: "A fully structured (SMART) entry",  detail: "Specific, measurable, achievable, relevant, and time-bound." },
     ],
   },
   {
     id: "missing",
-    label: "Absent data",
-    prompt: "If the relevant field is missing from the note…",
+    label: "If the field is missing from the note…",
+    prompt: "When the relevant section isn't present at all…",
     options: [
-      { v: "fail", label: "Fail — treat absence as a violation", detail: "Use when presence itself is the requirement.", recommended: true },
-      { v: "na",   label: "N/A — skip this rule for that note",  detail: "Use only when the rule shouldn't apply if the section is missing." },
+      { v: "fail", label: "Count it as a fail",              detail: "Use this when the section itself must exist.", recommended: true },
+      { v: "na",   label: "Mark it N/A and skip this note",  detail: "Use only when the rule doesn't apply if the section is missing." },
     ],
   },
   {
     id: "count",
-    label: "Quantity",
-    prompt: "How many qualifying instances are needed to pass?",
+    label: "How many instances are needed?",
+    prompt: "To pass, the note must have…",
     options: [
-      { v: "one",   label: "One is enough",     detail: "Pass as soon as one qualifying instance is found.", recommended: true },
-      { v: "multi", label: "Multiple required",  detail: "At least 2 qualifying instances must be present." },
+      { v: "one",   label: "At least one",     detail: "Pass as soon as one qualifying instance is found.", recommended: true },
+      { v: "multi", label: "Two or more",       detail: "At least 2 qualifying instances must be present." },
     ],
   },
 ];
@@ -422,14 +425,15 @@ function ClarifyStage({ draft, setDraft, onBack, onNext }) {
 
   const definition = composeDefinition(draft, answers);
   const confidenceColor = allAnswered ? "var(--ok-700)" : answeredCount > 0 ? "var(--warn-700)" : "var(--ink-400)";
-  const confidenceLabel = allAnswered ? "High" : answeredCount > 0 ? "Medium" : "Low";
+  const confidenceLabel = allAnswered ? "High" : answeredCount > 0 ? "Medium" : "—";
+  const showDefinition = answeredCount > 0;
 
   return (
     <div className="page" style={{paddingTop:24}}>
       <div className="page-header">
         <div>
-          <h1>Clarify the rule logic</h1>
-          <p className="sub">Three quick settings to define exactly how the engine evaluates each note. Your description stays as-is — this only affects pass / fail logic.</p>
+          <h1>Set the pass / fail logic</h1>
+          <p className="sub">Three quick questions that tell Eleos exactly when to pass or fail a note. Your description from the previous step stays as written — these settings only control evaluation behavior.</p>
         </div>
         <div className="actions">
           <button className="btn btn-ghost" onClick={onBack}>
@@ -464,17 +468,26 @@ function ClarifyStage({ draft, setDraft, onBack, onNext }) {
                 Confidence:&nbsp;<span style={{color:confidenceColor, fontWeight:600}}>{confidenceLabel}</span>
               </span>
             </div>
-            <div className="def-body">{definition.statement}</div>
-            <div className="def-rubric">
-              <div>
-                <div className="lbl pass-lbl">PASS WHEN</div>
-                <div>{definition.pass}</div>
+            {showDefinition ? (
+              <>
+                <div className="def-body">{definition.statement}</div>
+                <div className="def-rubric">
+                  <div>
+                    <div className="lbl pass-lbl">PASS WHEN</div>
+                    <div>{definition.pass}</div>
+                  </div>
+                  <div>
+                    <div className="lbl fail-lbl">FAIL WHEN</div>
+                    <div>{definition.fail}</div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div style={{padding:"20px 0", textAlign:"center", color:"var(--ink-400)", fontSize:13, lineHeight:1.6}}>
+                <div style={{marginBottom:6, fontSize:20}}>⟵</div>
+                Answer the questions on the right to generate your rule definition.
               </div>
-              <div>
-                <div className="lbl fail-lbl">FAIL WHEN</div>
-                <div>{definition.fail}</div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Rule summary from Define */}
@@ -521,8 +534,8 @@ function ClarifyStage({ draft, setDraft, onBack, onNext }) {
                 color:"white", display:"grid", placeItems:"center", flexShrink:0,
               }}><Icon name="sparkle" size={12} /></span>
               <div>
-                <h3>Rule logic</h3>
-                <div className="muted small">{answeredCount} of {total} set</div>
+                <h3>Evaluation settings</h3>
+                <div className="muted small">{answeredCount} of {total} answered</div>
               </div>
               <div className="agree-progress" style={{marginLeft:"auto", width:80}}>
                 <div className="fill" style={{width:`${(answeredCount/total)*100}%`}}></div>
