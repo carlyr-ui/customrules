@@ -319,30 +319,94 @@ function RuleSidePanel({ rule, onClose, onAction, onOpenFlow }) {
             </div>
           )}
 
-          <div className="panel-section">
-            <h4>Where this runs</h4>
-            <div className="surfaces" style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-              <SurfacePill on={rule.surfaces?.includes("dashboard")} label="Dashboard" />
-              <SurfacePill on={rule.surfaces?.includes("lqa")} label="LQA (real-time)" />
+          {/* Where this runs — org rules only */}
+          {isOrg && (
+            <div className="panel-section">
+              <h4>Where this runs</h4>
+              <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:8}}>
+                {["dashboard", "lqa"].map(s => {
+                  const active = rule.surfaces?.includes(s);
+                  const label = s === "dashboard" ? "Dashboard" : "LQA (real-time)";
+                  return (
+                    <span key={s} style={{
+                      display:"inline-flex", alignItems:"center", gap:5,
+                      padding:"4px 10px", borderRadius:6, fontSize:12, fontWeight:500,
+                      background: active ? "var(--ok-50)" : "var(--ink-100)",
+                      color: active ? "var(--ok-700)" : "var(--ink-400)",
+                      border: `1px solid ${active ? "var(--ok-100)" : "var(--ink-150)"}`,
+                    }}>
+                      <span style={{
+                        width:6, height:6, borderRadius:"50%",
+                        background: active ? "var(--ok-500)" : "var(--ink-300)",
+                        flexShrink:0,
+                      }} />
+                      {label}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="muted small">
+                {rule.surfaces?.length === 2
+                  ? "Running in Dashboard and LQA."
+                  : rule.surfaces?.includes("dashboard")
+                    ? "Running in Dashboard only."
+                    : rule.surfaces?.includes("lqa")
+                      ? "Running in LQA only."
+                      : rule.status === "active"
+                        ? "No surfaces active — rule is not currently running."
+                        : "No surfaces selected yet. You'll choose when activating."}
+              </div>
             </div>
-            <div className="muted small" style={{marginTop:8}}>
-              {rule.surfaces?.length === 2
-                ? "Runs on every new note in the Dashboard and surfaces in real time during LQA."
-                : rule.surfaces?.includes("dashboard")
-                  ? "Runs in the Dashboard only."
-                  : rule.surfaces?.includes("lqa")
-                    ? "Runs in LQA only."
-                    : rule.status === "active"
-                      ? "No surfaces active — rule is not currently running."
-                      : "No surfaces selected. Choose surfaces when activating."}
+          )}
+
+          {/* Library rule — adoptions & compatibility context */}
+          {!isOrg && (
+            <div className="panel-section">
+              <h4>Library details</h4>
+              <div style={{display:"grid", gridTemplateColumns:"120px 1fr", gap:8, fontSize:13, marginBottom:10}}>
+                <div className="muted">Adoptions</div>
+                <div style={{fontWeight:500}}>{rule.adoptions ?? "—"} orgs</div>
+                <div className="muted">Compatibility</div>
+                <div><CompatibilityBadge value={rule.compatibility} /></div>
+              </div>
+              {rule.compatibility === "none" && (
+                <div style={{padding:"8px 10px", background:"var(--err-50)", borderRadius:6,
+                             border:"1px solid var(--err-100)", color:"var(--err-700)", fontSize:12, lineHeight:1.5}}>
+                  <Icon name="alert" size={11} /> Required fields aren't in your data feed. You can still adopt and edit, but the rule won't run until the fields are available.
+                </div>
+              )}
+              {rule.compatibility === "partial" && (
+                <div style={{padding:"8px 10px", background:"var(--warn-50)", borderRadius:6,
+                             border:"1px solid var(--warn-100)", color:"var(--warn-700)", fontSize:12, lineHeight:1.5}}>
+                  <Icon name="info" size={11} /> Some required fields are missing. We'll flag alternatives during editing.
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           <div className="panel-section">
             <h4>Scope</h4>
-            <div className="kv-row" style={{padding:0, border:"none", display:"grid", gridTemplateColumns:"120px 1fr", gap:8, fontSize:13}}>
-              <div className="muted">Doc type</div><div>{rule.docType || "—"}</div>
-              <div className="muted">Rule type</div><div style={{textTransform:"capitalize"}}>{rule.ruleType || "Simple"}</div>
+            <div style={{display:"grid", gridTemplateColumns:"120px 1fr", gap:8, fontSize:13}}>
+              <div className="muted">Doc type</div>
+              <div>{rule.docType || "—"}</div>
+              {rule.priority && (
+                <>
+                  <div className="muted">Priority</div>
+                  <div>{rule.priority}</div>
+                </>
+              )}
+              {rule.ruleType && (
+                <>
+                  <div className="muted">Rule type</div>
+                  <div style={{textTransform:"capitalize"}}>{rule.ruleType}</div>
+                </>
+              )}
+              {rule.docEntries?.some(e => e.references?.length > 0) && (
+                <>
+                  <div className="muted">References</div>
+                  <div>{rule.docEntries.flatMap(e => e.references).join(", ")}</div>
+                </>
+              )}
             </div>
           </div>
 
