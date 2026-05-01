@@ -75,6 +75,39 @@ function RuleManagement({ rules, onOpen, onCreate, onAdopt, onSelect, selectedId
         </select>
       </div>
 
+      {/* Library tab context banner */}
+      {tab === "library" && (
+        <div style={{
+          display:"flex", gap:12, padding:"10px 14px", marginBottom:12,
+          background:"var(--info-50)", border:"1px solid var(--info-100)",
+          borderRadius:8, fontSize:13, color:"var(--info-700)", lineHeight:1.5,
+        }}>
+          <Icon name="book" size={15} style={{flexShrink:0, marginTop:1}} />
+          <span>
+            <strong>Eleos Library</strong> contains rules built by Eleos for common behavioral health standards.
+            They aren't running in your org yet — adopt a rule to copy it into your organization and customize it.
+          </span>
+        </div>
+      )}
+
+      {/* Org tab status legend */}
+      {tab === "org" && (
+        <div style={{display:"flex", gap:14, marginBottom:10, fontSize:11, color:"var(--ink-500)", flexWrap:"wrap", alignItems:"center"}}>
+          <span style={{fontWeight:600, color:"var(--ink-400)"}}>Status:</span>
+          {[
+            { dot:"var(--info-500)", label:"Draft — still being built" },
+            { dot:"var(--warn-500)", label:"Submitted — validated, not yet live" },
+            { dot:"var(--ok-500)",   label:"Active — running on notes" },
+            { dot:"var(--ink-300)",  label:"Disabled — paused" },
+          ].map(({ dot, label }) => (
+            <span key={label} style={{display:"flex", alignItems:"center", gap:4}}>
+              <span style={{width:7, height:7, borderRadius:"50%", background:dot, flexShrink:0}} />
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="card" style={{overflow:"hidden"}}>
         <table className="rules-table">
           <thead>
@@ -228,11 +261,11 @@ function RuleSidePanel({ rule, onClose, onAction, onOpenFlow }) {
     if (status === "submitted") {
       return (
         <>
-          <button className="btn btn-brand btn-sm" onClick={() => onOpenFlow(rule.id, "validate")}>
-            <Icon name="play" size={12} /> Continue validation
+          <button className="btn btn-brand btn-sm" onClick={() => onOpenFlow(rule.id, "activate")}>
+            <Icon name="power" size={12} /> Activate rule
           </button>
-          <button className="btn btn-secondary btn-sm" onClick={() => onOpenFlow(rule.id, "clarify")}>
-            <Icon name="arrowLeft" size={12} /> Back to Clarify
+          <button className="btn btn-secondary btn-sm" onClick={() => onOpenFlow(rule.id, "define")}>
+            <Icon name="edit" size={12} /> Edit rule
           </button>
         </>
       );
@@ -286,6 +319,19 @@ function RuleSidePanel({ rule, onClose, onAction, onOpenFlow }) {
         <div className="panel-actions">{primaryActions}</div>
 
         <div className="drawer-body" style={{padding:0}}>
+          {/* Submitted status callout */}
+          {isOrg && status === "submitted" && (
+            <div className="panel-section">
+              <div style={{padding:"10px 12px", background:"var(--warn-50)", borderRadius:8,
+                           border:"1px solid var(--warn-100)", fontSize:13, color:"var(--warn-700)", lineHeight:1.5}}>
+                <div style={{fontWeight:600, marginBottom:4, display:"flex", alignItems:"center", gap:6}}>
+                  <Icon name="check" size={13} /> Validation passed — ready to activate
+                </div>
+                <div>This rule has been validated but isn't running yet. Activate it to start evaluating notes. No need to re-validate.</div>
+              </div>
+            </div>
+          )}
+
           {isOrg && status === "active" && (
             <div className="panel-section">
               <h4>Last 7 days</h4>
