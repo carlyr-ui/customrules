@@ -170,10 +170,10 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
           </div>
         </div>
 
-        {/* ── Section 2: Document scope ── */}
+        {/* ── Section 2: Which notes does this apply to ── */}
         <div className="section-h">
-          <h3>Document scope</h3>
-          <span className="sub">Which document types does this rule evaluate? Add reference documents to check against other records.</span>
+          <h3>Which notes does this apply to?</h3>
+          <span className="sub">Choose the note type this rule checks. Optionally, select other documents it should reference — for example, checking a progress note against a treatment plan.</span>
         </div>
 
         <div style={{display:"flex", flexDirection:"column", gap:10}}>
@@ -186,12 +186,12 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
                   <div style={{display:"flex", alignItems:"center", gap:10}}>
                     <div style={{flex:1}}>
                       <label className="field-label" style={{marginBottom:6, display:"block"}}>
-                        Evaluated document <span className="req">*</span>
+                        Note type being evaluated <span className="req">*</span>
                       </label>
                       <select className="select" value={entry.evaluated}
                               onChange={e => updateEntry(entry.id, { evaluated: e.target.value, references: [] })}
                               style={{maxWidth:280}}>
-                        <option value="">Choose document type…</option>
+                        <option value="">Choose a note type…</option>
                         {ORG_SCHEMA.docTypes
                           .filter(d => !docEntries.some(e2 => e2.id !== entry.id && e2.evaluated === d.name))
                           .map(d => <option key={d.name}>{d.name}</option>)}
@@ -199,7 +199,7 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
                     </div>
                     {isComplex && (
                       <span className="badge badge-info" style={{flexShrink:0}}>
-                        <Icon name="link" size={11} /> Cross-document
+                        <Icon name="link" size={11} /> Cross-document rule
                       </span>
                     )}
                     {docEntries.length > 1 && (
@@ -213,8 +213,11 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
                   {/* Reference documents */}
                   {entry.evaluated && (
                     <div>
-                      <div style={{fontSize:12, fontWeight:600, color:"var(--ink-500)", marginBottom:8, textTransform:"uppercase", letterSpacing:"0.04em"}}>
-                        Check against <span style={{fontWeight:400, textTransform:"none", letterSpacing:0, color:"var(--ink-400)"}}>— reference documents (optional)</span>
+                      <div style={{fontSize:13, fontWeight:500, color:"var(--ink-800)", marginBottom:4}}>
+                        Should this rule reference another document?
+                      </div>
+                      <div className="muted small" style={{marginBottom:10}}>
+                        Optional. Select if this rule requires checking the {entry.evaluated.toLowerCase()} against another record — e.g., a treatment plan or prior assessment.
                       </div>
                       <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
                         {otherDocTypes.map(d => {
@@ -236,7 +239,7 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
                       </div>
                       {entry.references.length > 0 && (
                         <div className="muted small" style={{marginTop:8, color:"var(--ink-500)"}}>
-                          <Icon name="info" size={11} /> The engine will evaluate <strong>{entry.evaluated}</strong> in relation to the selected reference documents.
+                          <Icon name="info" size={11} /> Eleos will evaluate each <strong>{entry.evaluated}</strong> alongside the selected reference document(s).
                         </div>
                       )}
                     </div>
@@ -247,7 +250,7 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
           })}
 
           <button className="btn btn-ghost btn-sm" style={{alignSelf:"flex-start"}} onClick={addEntry}>
-            <Icon name="plus" size={13} /> Add another document scope
+            <Icon name="plus" size={13} /> Add another note type
           </button>
         </div>
 
