@@ -55,6 +55,7 @@ function App() {
     docEntries: [],    // [{ id, evaluated, references: [] }]
     policyRef: "",     // ORG_POLICIES id or ""
     priority: "Medium",
+    programs: [],
     fields: [], references: [],
     library: false, owner: "org", status: "draft", surfaces: [],
     validation: "not_started", validationCount: 0,
@@ -146,6 +147,7 @@ function App() {
       <Topbar crumbs={[{label:"Compliance"}, {label:"Custom Rules"}]} />
       <RuleManagement
         rules={rules}
+        setRules={setRules}
         onCreate={startNew}
         onSelect={setSelectedRuleId}
         selectedId={selectedRuleId}
@@ -153,9 +155,12 @@ function App() {
       {selectedRule && (
         <RuleSidePanel
           rule={selectedRule}
+          rules={rules}
+          setRules={setRules}
           onClose={() => setSelectedRuleId(null)}
           onAction={handleAction}
           onOpenFlow={openExistingForEdit}
+          pushToast={pushToast}
         />
       )}
     </>

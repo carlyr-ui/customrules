@@ -122,6 +122,20 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
 
       <div style={{maxWidth:720}}>
 
+        {/* ── Active rule warning ── */}
+        {draft.status === "active" && (
+          <div style={{
+            display:"flex", gap:10, padding:"10px 14px", marginBottom:20,
+            background:"var(--warn-50)", border:"1px solid var(--warn-100)",
+            borderRadius:8, fontSize:13, color:"var(--warn-700)", lineHeight:1.5,
+          }}>
+            <Icon name="alert" size={15} style={{flexShrink:0, marginTop:1}} />
+            <span>
+              <strong>This rule is currently active.</strong> Changes you make here will apply to new notes only — notes already evaluated will not be re-evaluated.
+            </span>
+          </div>
+        )}
+
         {/* ── Section 1: What the rule checks ── */}
         <div className="section-h first">
           <h3>What it checks</h3>

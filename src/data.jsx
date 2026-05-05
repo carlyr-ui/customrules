@@ -242,4 +242,82 @@ const ORG_POLICIES = [
   { id: "p-5", name: "CMS Conditions of Participation", type: "Regulatory" },
 ];
 
-Object.assign(window, { Icon, ORG_SCHEMA, ORG_POLICIES, ALL_RULES, SAMPLE_NOTES, RULE_HISTORY });
+// Programs / services available in this org
+const ORG_PROGRAMS = [
+  "Adult BH",
+  "Adolescent BH",
+  "SUD",
+  "HH&H",
+  "Intensive Outpatient",
+  "Crisis Stabilization",
+];
+
+// Eleos built-in compliance checkpoints — always on, not editable by org
+// Completeness and Uniqueness have configurable thresholds
+const ELEOS_CHECKPOINTS = [
+  {
+    id: "ec-1",
+    name: "Completeness",
+    description: "The document must contain 10 or more words across all narrative fields.",
+    critical: true,
+    threshold: { key: "minWords", value: 10, label: "Minimum word count", unit: "words", min: 1, max: 200 },
+    docTypes: "All note types",
+    weeklyRuns: 1840, weeklyFails: 92,
+  },
+  {
+    id: "ec-2",
+    name: "Uniqueness",
+    description: "The document must be less than 85% similar to a previous document written by the same provider.",
+    critical: true,
+    threshold: { key: "maxSimilarity", value: 85, label: "Max similarity", unit: "%", min: 50, max: 99 },
+    docTypes: "All note types",
+    weeklyRuns: 1840, weeklyFails: 38,
+  },
+  {
+    id: "ec-3",
+    name: "Progress Mentioned",
+    description: "The document includes a statement reflecting progress, lack of progress, or no change in treatment.",
+    critical: false,
+    threshold: null,
+    docTypes: "All note types",
+    weeklyRuns: 1840, weeklyFails: 147,
+  },
+  {
+    id: "ec-4",
+    name: "Golden Thread",
+    description: "The document aligns with the active treatment plan — services match, goals are addressed, and clinical problems are aligned.",
+    critical: false,
+    threshold: null,
+    docTypes: "All note types",
+    weeklyRuns: 1840, weeklyFails: 210,
+  },
+  {
+    id: "ec-5",
+    name: "Intervention Used",
+    description: "The document includes an action-oriented, scope-aligned intervention that relates to the presenting need.",
+    critical: false,
+    threshold: null,
+    docTypes: "All note types",
+    weeklyRuns: 1840, weeklyFails: 183,
+  },
+  {
+    id: "ec-6",
+    name: "Client Response to Intervention",
+    description: "The document includes a statement describing the client's response to the intervention provided.",
+    critical: false,
+    threshold: null,
+    docTypes: "All note types",
+    weeklyRuns: 1840, weeklyFails: 294,
+  },
+  {
+    id: "ec-7",
+    name: "Compliant Plan",
+    description: "The document includes next steps or a next appointment scheduled for the client.",
+    critical: false,
+    threshold: null,
+    docTypes: "All note types",
+    weeklyRuns: 1840, weeklyFails: 165,
+  },
+];
+
+Object.assign(window, { Icon, ORG_SCHEMA, ORG_POLICIES, ORG_PROGRAMS, ELEOS_CHECKPOINTS, ALL_RULES, SAMPLE_NOTES, RULE_HISTORY });
