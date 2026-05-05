@@ -1295,84 +1295,115 @@ kbd {
 }
 
 /* ============================================================
-   v3 — "Calmer" pass.
-   Strip default chrome. Drain color. Tighten type.
-   Color and emphasis are reserved for status, primary action, and
-   the active row. Everything else is ink + whitespace.
+   v4 — Eleos product-matched pass.
+   Dark navy sidebar, brand blue primary actions, flat content area.
+   Based on Management Hub + Clinician app screenshots.
    ============================================================ */
 
 :root {
-  --ink-50:  #FAFAFA;
-  --ink-100: #F2F2F3;
-  --ink-150: #E8E9EC;
-  --ink-200: #DEE0E4;
+  /* ── Updated neutrals — slightly cooler to match product ── */
+  --ink-50:  #F8F9FA;
+  --ink-100: #F1F3F5;
+  --ink-150: #E9ECEF;
+  --ink-200: #DEE2E6;
+
+  /* ── Sidebar nav ── */
+  --nav-bg:         #1B2880;
+  --nav-bg-hover:   rgba(255,255,255,.08);
+  --nav-bg-active:  rgba(255,255,255,.14);
+  --nav-text:       rgba(255,255,255,.72);
+  --nav-text-active:#ffffff;
+
+  /* ── Brand blue — brighter to match product buttons ── */
+  --brand-700: #1E3A8A;
+  --brand-600: #2563EB;
+  --brand-500: #3B82F6;
+  --brand-100: #DBEAFE;
+  --brand-50:  #EFF6FF;
 }
 
-html, body { background: #FFFFFF; color: var(--ink-900); }
+html, body { background: var(--ink-50); color: var(--ink-900); }
 
-/* Sidebar — drain color, no border */
+/* ── Sidebar — dark navy ── */
 .sidebar {
-  background: #FAFAFA;
-  border-right: 1px solid var(--ink-150);
-  padding: 18px 12px;
+  background: var(--nav-bg);
+  border-right: none;
+  padding: 16px 10px;
 }
 .sidebar-brand .logo {
-  background: var(--ink-900);
+  background: rgba(255,255,255,.15);
   box-shadow: none;
-  border-radius: 6px;
-  width: 26px; height: 26px;
+  border-radius: 8px;
+  width: 28px; height: 28px;
   font-size: 13px;
+  color: #fff;
 }
-.sidebar-brand { padding: 4px 8px 14px; }
-.nav-item { padding: 7px 10px; font-weight: 500; color: var(--ink-700); }
-.nav-item:hover { background: var(--ink-100); }
-.nav-item.active { background: var(--ink-900); color: #fff; }
-.nav-item.active svg { color: #fff; }
-.nav-item.active .count { color: rgba(255,255,255,.7); }
-.sidebar-section-label { color: var(--ink-400); padding: 18px 10px 4px; }
+.sidebar-brand .brand-name { color: #fff; }
+.sidebar-brand .brand-sub  { color: rgba(255,255,255,.5); }
+.sidebar-brand { padding: 4px 8px 16px; }
 
-/* Topbar — flatter */
-.topbar { background: #fff; border-bottom: 1px solid var(--ink-150); padding: 0 24px; height: 52px; }
+.sidebar-section-label {
+  color: rgba(255,255,255,.35);
+  padding: 16px 10px 4px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.nav-item {
+  padding: 8px 10px;
+  font-weight: 500;
+  color: var(--nav-text);
+  border-radius: 6px;
+}
+.nav-item svg { color: rgba(255,255,255,.5); }
+.nav-item:hover { background: var(--nav-bg-hover); color: #fff; }
+.nav-item:hover svg { color: rgba(255,255,255,.8); }
+.nav-item.active { background: var(--nav-bg-active); color: var(--nav-text-active); }
+.nav-item.active svg { color: #fff; }
+.nav-item .count { color: rgba(255,255,255,.4); }
+.nav-item.active .count { color: rgba(255,255,255,.7); }
+
+/* ── Topbar — white, flat ── */
+.topbar { background: #fff; border-bottom: 1px solid var(--ink-150); padding: 0 28px; height: 52px; }
 .user-chip { background: transparent; padding: 2px; }
-.user-chip .avatar { background: var(--ink-900); color: #fff; }
+.user-chip .avatar { background: var(--nav-bg); color: #fff; }
 .user-chip span { color: var(--ink-700); }
 
-/* Page — generous whitespace, calmer canvas */
+/* ── Page — white canvas ── */
 .page { padding: 28px 32px 80px; background: #fff; }
 .page-header { margin-bottom: 28px; }
 .page-header h1 { font-size: 22px; letter-spacing: -0.4px; font-weight: 600; }
 .page-header .sub { font-size: 13px; color: var(--ink-500); margin-top: 4px; }
 
-/* Cards — drop shadows, soften borders */
-.card { box-shadow: none; border-color: var(--ink-150); }
+/* ── Cards — no shadow, softer border ── */
+.card { box-shadow: none; border-color: var(--ink-150); border-radius: 10px; }
 .card-header { padding: 14px 18px; }
 .card-body { padding: 18px; }
 
-/* Tabs — quieter */
-.tab { color: var(--ink-500); font-weight: 500; }
+/* ── Tabs ── */
+.tab { color: var(--ink-500); font-weight: 500; font-size: 13px; }
 .tab .count { background: transparent; color: var(--ink-400); padding: 0; font-weight: 500; }
 .tab.active .count { background: transparent; color: var(--ink-900); }
-.tab.active { color: var(--ink-900); border-bottom-color: var(--ink-900); }
+.tab.active { color: var(--ink-900); border-bottom-color: var(--brand-500); }
 
-/* Filter bar — flatter */
+/* ── Filter bar ── */
 .search-input { box-shadow: none; }
-.search-input:focus-within { box-shadow: 0 0 0 2px var(--ink-200); border-color: var(--ink-400); }
+.search-input:focus-within { box-shadow: 0 0 0 3px var(--brand-100); border-color: var(--brand-500); }
 .filter-chip { box-shadow: none; }
 
 .segmented { background: transparent; padding: 0; gap: 0; border: 1px solid var(--ink-200); border-radius: var(--r-md); }
 .segmented button { padding: 5px 10px; border-radius: 0; }
 .segmented button + button { border-left: 1px solid var(--ink-150); }
-.segmented button.on { background: var(--ink-900); color: #fff; box-shadow: none; }
+.segmented button.on { background: var(--nav-bg); color: #fff; box-shadow: none; }
 
-/* Buttons — only primary keeps fill */
+/* ── Buttons — brand blue restored ── */
 .btn { box-shadow: none !important; font-weight: 500; }
 .btn-secondary { border-color: var(--ink-200); }
 .btn-secondary:hover:not(:disabled) { background: var(--ink-50); border-color: var(--ink-300); }
-.btn-brand { background: var(--ink-900); border-color: var(--ink-900); }
-.btn-brand:hover:not(:disabled) { background: #000; border-color: #000; }
+.btn-brand { background: var(--brand-600); border-color: var(--brand-600); color: #fff; }
+.btn-brand:hover:not(:disabled) { background: var(--brand-700); border-color: var(--brand-700); }
 
-/* Table — flat, generous, lower contrast borders */
-.card { border-radius: 10px; }
+/* ── Table — flat, clean ── */
 .rules-table thead th {
   background: transparent;
   border-bottom: 1px solid var(--ink-150);
@@ -1382,12 +1413,12 @@ html, body { background: #FFFFFF; color: var(--ink-900); }
   padding: 10px 16px;
 }
 .rules-table tbody td {
-  padding: 14px 16px;
+  padding: 13px 16px;
   border-bottom: 1px solid var(--ink-150);
 }
 .rules-table tbody tr:last-child td { border-bottom: none; }
 .rules-table tbody tr:hover { background: var(--ink-50); }
-.rules-table tbody tr.selected { background: var(--ink-50); box-shadow: inset 3px 0 0 var(--ink-900); }
+.rules-table tbody tr.selected { background: var(--brand-50); box-shadow: inset 3px 0 0 var(--brand-500); }
 .rule-title { font-weight: 600; font-size: 14px; gap: 6px; }
 .rule-subtitle { font-size: 12.5px; color: var(--ink-500); margin-top: 3px; }
 
@@ -1442,7 +1473,7 @@ html, body { background: #FFFFFF; color: var(--ink-900); }
   font-size: 11px;
 }
 
-/* Stepper — flat */
+/* ── Stepper ── */
 .stepper { padding: 14px 28px; background: #fff; }
 .step { padding: 4px 8px; gap: 8px; font-size: 13px; }
 .step .num {
@@ -1450,8 +1481,8 @@ html, body { background: #FFFFFF; color: var(--ink-900); }
   border: 1px solid var(--ink-200);
   color: var(--ink-500);
 }
-.step.current .num { background: var(--ink-900); color: #fff; border-color: var(--ink-900); }
-.step.done .num { background: transparent; border-color: var(--ink-900); color: var(--ink-900); }
+.step.current .num { background: var(--brand-600); color: #fff; border-color: var(--brand-600); }
+.step.done .num { background: transparent; border-color: var(--brand-500); color: var(--brand-600); }
 .step-sep { background: var(--ink-150); flex: 0 0 24px; }
 
 /* Side panel / drawer — calmer */
@@ -1506,16 +1537,16 @@ html, body { background: #FFFFFF; color: var(--ink-900); }
 .library-card { box-shadow: none; }
 .library-card:hover { box-shadow: none; transform: none; border-color: var(--ink-300); }
 
-/* Activate options — no heavy box-shadow on selected */
+/* ── Activate options ── */
 .activate-option.on {
-  background: var(--ink-50);
-  border-color: var(--ink-900);
+  background: var(--brand-50);
+  border-color: var(--brand-500);
   box-shadow: none;
 }
 
-/* Surface toggle — flat selection */
-.surface-toggle.on { background: var(--ink-50); border-color: var(--ink-900); }
-.surface-toggle.on .ck { background: var(--ink-900); border-color: var(--ink-900); }
+/* ── Surface toggle ── */
+.surface-toggle.on { background: var(--brand-50); border-color: var(--brand-500); }
+.surface-toggle.on .ck { background: var(--brand-600); border-color: var(--brand-600); }
 
 /* Note preview — flatter */
 .note-preview {
@@ -1593,6 +1624,19 @@ h1, h2, h3, h4 { letter-spacing: -0.2px; }
 /* Quiet down hover on rule rows */
 .rules-table tbody tr { transition: background 80ms ease; }
 
-/* Tag the v2 brand-50 backgrounds out — most are unnecessary */
-.brand-50-bg, .activate-option.on, .surface-toggle.on { background: var(--ink-50); }
+/* ── Check row ── */
+.check-row.checked { border-color: var(--brand-500); background: var(--brand-50); }
+.check-row.checked .ck { background: var(--brand-600); border-color: var(--brand-600); color: white; }
+
+/* ── Opt pill selected ── */
+.opt-pill.on { border-color: var(--brand-500); background: var(--brand-50); color: var(--brand-700); }
+
+/* ── Timeline active dot ── */
+.timeline-item.active::before { background: var(--brand-500); border-color: var(--brand-500); box-shadow: 0 0 0 3px var(--brand-100); }
+
+/* ── Input focus ── */
+.input:focus, .textarea:focus, .select:focus {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px var(--brand-100);
+}
 
