@@ -1,4 +1,4 @@
-/* global React, Icon, ORG_SCHEMA, ORG_POLICIES */
+/* global React, Icon, ORG_SCHEMA, ORG_POLICIES, ORG_PROGRAMS */
 const { useState: useFCState, useEffect: useFCEffect } = React;
 
 // ============================================================
@@ -34,38 +34,39 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
     : secsAgo < 5 ? "Draft auto-saved just now"
     : `Draft auto-saved ${secsAgo}s ago`;
 
-  // ── Document entries ─────────────────────────────────────
-  const initEntries = () => {
-    if (draft.docEntries?.length > 0) return draft.docEntries;
-    if (draft.docType) return [{ id: "de-1", evaluated: draft.docType, references: [] }];
-    return [{ id: `de-${Date.now()}`, evaluated: "", references: [] }];
+  // ── Note types (multi-select) ────────────────────────────
+  const initDocTypes = () => {
+    if (draft.docTypes?.length > 0) return draft.docTypes;
+    if (draft.docEntries?.length > 0) return draft.docEntries.map(e => e.evaluated).filter(Boolean);
+    if (draft.docType) return [draft.docType];
+    return [];
   };
-  const [docEntries, setDocEntries] = useFCState(initEntries);
+  const [selectedDocTypes, setSelectedDocTypes] = useFCState(initDocTypes);
 
-  const syncEntries = (entries) => {
-    setDocEntries(entries);
-    update({ docEntries: entries, docType: entries[0]?.evaluated || "" });
-  };
-
-  const addEntry = () => {
-    syncEntries([...docEntries, { id: `de-${Date.now()}`, evaluated: "", references: [] }]);
-  };
-
-  const removeEntry = (id) => {
-    syncEntries(docEntries.filter(e => e.id !== id));
-  };
-
-  const updateEntry = (id, patch) => {
-    syncEntries(docEntries.map(e => e.id === id ? { ...e, ...patch } : e));
+  const toggleDocType = (name) => {
+    const next = selectedDocTypes.includes(name)
+      ? selectedDocTypes.filter(n => n !== name)
+      : [...selectedDocTypes, name];
+    setSelectedDocTypes(next);
+    update({
+      docTypes: next,
+      docType: next[0] || "",
+      docEntries: next.map((dt, i) => ({ id: `de-${i}`, evaluated: dt, references: selectedRefs })),
+    });
   };
 
-  const toggleRef = (entryId, docName) => {
-    const entry = docEntries.find(e => e.id === entryId);
-    if (!entry) return;
-    const refs = entry.references.includes(docName)
-      ? entry.references.filter(r => r !== docName)
-      : [...entry.references, docName];
-    updateEntry(entryId, { references: refs });
+  // ── Reference documents (optional) ───────────────────────
+  const initRefs = () => draft.docEntries?.[0]?.references || [];
+  const [selectedRefs, setSelectedRefs] = useFCState(initRefs);
+
+  const toggleRefDoc = (name) => {
+    const next = selectedRefs.includes(name)
+      ? selectedRefs.filter(r => r !== name)
+      : [...selectedRefs, name];
+    setSelectedRefs(next);
+    update({
+      docEntries: selectedDocTypes.map((dt, i) => ({ id: `de-${i}`, evaluated: dt, references: next })),
+    });
   };
 
   // ── Priority ─────────────────────────────────────────────
@@ -88,7 +89,7 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
     draft.title &&
     draft.description &&
     draft.passCriteria &&
-    docEntries.some(e => e.evaluated)
+    selectedDocTypes.length > 0
   );
 
   const fieldError = (field, value) => touched[field] && !value
@@ -112,7 +113,10 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
         </div>
         <div className="actions">
           <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4}}>
-            <button className="btn btn-brand" disabled={!canContinue} onClick={onNext}>
+            <button className="btn btn-brand" disabled={!canContinue} onClick={() => {
+              touch("title"); touch("description"); touch("passCriteria"); touch("docTypes");
+              if (canContinue) onNext();
+            }}>
               Continue <Icon name="arrowRight" size={14} />
             </button>
             <div style={{fontSize:11, color:"var(--ink-400)"}}>Next: set pass / fail logic</div>
@@ -190,85 +194,109 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
         {/* ── Section 2: Which notes does this apply to ── */}
         <div className="section-h">
           <h3>Which notes does this apply to?</h3>
-          <span className="sub">Choose the note type this rule checks. Optionally, select other documents it should reference — for example, checking a progress note against a treatment plan.</span>
+          <span className="sub">Select all note types this rule should check. Optionally narrow by program or add a reference document.</span>
         </div>
 
-        <div style={{display:"flex", flexDirection:"column", gap:10}}>
-          {docEntries.map((entry, i) => {
-            const otherDocTypes = ORG_SCHEMA.docTypes.filter(d => d.name !== entry.evaluated);
-            const isComplex = entry.references.length > 0;
-            return (
-              <div key={entry.id} className="card">
-                <div className="card-body" style={{display:"flex", flexDirection:"column", gap:14}}>
-                  <div style={{display:"flex", alignItems:"center", gap:10}}>
-                    <div style={{flex:1}}>
-                      <label className="field-label" style={{marginBottom:6, display:"block"}}>
-                        Note type being evaluated <span className="req">*</span>
-                      </label>
-                      <select className="select" value={entry.evaluated}
-                              onChange={e => updateEntry(entry.id, { evaluated: e.target.value, references: [] })}
-                              style={{maxWidth:280}}>
-                        <option value="">Choose a note type…</option>
-                        {ORG_SCHEMA.docTypes
-                          .filter(d => !docEntries.some(e2 => e2.id !== entry.id && e2.evaluated === d.name))
-                          .map(d => <option key={d.name}>{d.name}</option>)}
-                      </select>
-                    </div>
-                    {isComplex && (
-                      <span className="badge badge-info" style={{flexShrink:0}}>
-                        <Icon name="link" size={11} /> Cross-document rule
-                      </span>
-                    )}
-                    {docEntries.length > 1 && (
-                      <button className="icon-btn" title="Remove" onClick={() => removeEntry(entry.id)}
-                              style={{color:"var(--ink-400)", flexShrink:0}}>
-                        <Icon name="x" size={16} />
-                      </button>
-                    )}
-                  </div>
+        <div className="card">
+          <div className="card-body" style={{display:"flex", flexDirection:"column", gap:18}}>
 
-                  {/* Reference documents */}
-                  {entry.evaluated && (
-                    <div>
-                      <div style={{fontSize:13, fontWeight:500, color:"var(--ink-800)", marginBottom:4}}>
-                        Should this rule reference another document?
-                      </div>
-                      <div className="muted small" style={{marginBottom:10}}>
-                        Optional. Select if this rule requires checking the {entry.evaluated.toLowerCase()} against another record — e.g., a treatment plan or prior assessment.
-                      </div>
-                      <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
-                        {otherDocTypes.map(d => {
-                          const selected = entry.references.includes(d.name);
-                          return (
-                            <button key={d.name}
-                                    onClick={() => toggleRef(entry.id, d.name)}
-                                    className={`btn btn-sm ${selected ? "btn-secondary" : "btn-ghost"}`}
-                                    style={{
-                                      borderColor: selected ? "var(--brand-500)" : undefined,
-                                      color: selected ? "var(--brand-700)" : undefined,
-                                      background: selected ? "var(--brand-50)" : undefined,
-                                    }}>
-                              {selected && <Icon name="check" size={12} />}
-                              {d.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {entry.references.length > 0 && (
-                        <div className="muted small" style={{marginTop:8, color:"var(--ink-500)"}}>
-                          <Icon name="info" size={11} /> Eleos will evaluate each <strong>{entry.evaluated}</strong> alongside the selected reference document(s).
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+            {/* Note types — multi-select pills */}
+            <div>
+              <label className="field-label" style={{marginBottom:8, display:"block"}}>
+                Note types <span className="req">*</span>
+              </label>
+              <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+                {ORG_SCHEMA.docTypes.map(d => {
+                  const on = selectedDocTypes.includes(d.name);
+                  return (
+                    <button key={d.name} onClick={() => toggleDocType(d.name)}
+                            className={`btn btn-sm`}
+                            style={{
+                              borderRadius: 99,
+                              background: on ? "var(--brand-50)" : "transparent",
+                              border: `1px solid ${on ? "var(--brand-500)" : "var(--ink-200)"}`,
+                              color: on ? "var(--brand-700)" : "var(--ink-600)",
+                              fontWeight: on ? 600 : 400,
+                            }}>
+                      {on && <Icon name="check" size={11} />}
+                      {d.name}
+                    </button>
+                  );
+                })}
               </div>
-            );
-          })}
+              {selectedDocTypes.length === 0 && touched.docTypes && (
+                <div style={{fontSize:12, color:"var(--err-700)", marginTop:4}}>Select at least one note type.</div>
+              )}
+            </div>
 
-          <button className="btn btn-ghost btn-sm" style={{alignSelf:"flex-start"}} onClick={addEntry}>
-            <Icon name="plus" size={13} /> Add another note type
-          </button>
+            {/* Programs / Services — multi-select pills */}
+            <div>
+              <label className="field-label" style={{marginBottom:4, display:"block"}}>
+                Programs / services <span className="opt">optional</span>
+              </label>
+              <div className="muted small" style={{marginBottom:8}}>Leave empty to apply to all programs.</div>
+              <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+                {ORG_PROGRAMS.map(p => {
+                  const on = (draft.programs || []).includes(p);
+                  return (
+                    <button key={p} onClick={() => {
+                      const next = on
+                        ? (draft.programs || []).filter(x => x !== p)
+                        : [...(draft.programs || []), p];
+                      update({ programs: next });
+                    }}
+                      className={`btn btn-sm`}
+                      style={{
+                        borderRadius: 99,
+                        background: on ? "var(--brand-50)" : "transparent",
+                        border: `1px solid ${on ? "var(--brand-500)" : "var(--ink-200)"}`,
+                        color: on ? "var(--brand-700)" : "var(--ink-600)",
+                        fontWeight: on ? 600 : 400,
+                      }}>
+                      {on && <Icon name="check" size={11} />}
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Reference documents — only shown when a note type is selected */}
+            {selectedDocTypes.length > 0 && (
+              <div>
+                <div style={{fontSize:13, fontWeight:500, color:"var(--ink-800)", marginBottom:4}}>
+                  Should this rule reference another document? <span className="opt" style={{fontWeight:400}}>optional</span>
+                </div>
+                <div className="muted small" style={{marginBottom:8}}>
+                  Select if this rule requires checking against another record — e.g., a treatment plan or prior assessment.
+                </div>
+                <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+                  {ORG_SCHEMA.docTypes
+                    .filter(d => !selectedDocTypes.includes(d.name))
+                    .map(d => {
+                      const on = selectedRefs.includes(d.name);
+                      return (
+                        <button key={d.name} onClick={() => toggleRefDoc(d.name)}
+                                className={`btn btn-sm ${on ? "btn-secondary" : "btn-ghost"}`}
+                                style={{
+                                  borderColor: on ? "var(--brand-500)" : undefined,
+                                  color: on ? "var(--brand-700)" : undefined,
+                                  background: on ? "var(--brand-50)" : undefined,
+                                }}>
+                          {on && <Icon name="check" size={12} />}
+                          {d.name}
+                        </button>
+                      );
+                    })}
+                </div>
+                {selectedRefs.length > 0 && (
+                  <div className="muted small" style={{marginTop:8, color:"var(--ink-500)"}}>
+                    <Icon name="info" size={11} /> Eleos will evaluate each selected note type alongside: <strong>{selectedRefs.join(", ")}</strong>.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Section 3: Policy reference ── */}
@@ -356,11 +384,14 @@ function DefineStage({ draft, setDraft, onBack, onNext }) {
         <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, marginTop:20}}>
           <div style={{display:"flex", gap:8}}>
             <button className="btn btn-ghost" onClick={onBack}>Save draft &amp; exit</button>
-            <button className="btn btn-brand" disabled={!canContinue} onClick={onNext}>
+            <button className="btn btn-brand" disabled={!canContinue} onClick={() => {
+              touch("title"); touch("description"); touch("passCriteria"); touch("docTypes");
+              if (canContinue) onNext();
+            }}>
               Continue <Icon name="arrowRight" size={14} />
             </button>
           </div>
-          {!canContinue && (touched.title || touched.description || touched.passCriteria) && (
+          {!canContinue && (touched.title || touched.description || touched.passCriteria || touched.docTypes) && (
             <div className="muted small" style={{color:"var(--err-700)"}}>
               Fill in required fields above to continue.
             </div>

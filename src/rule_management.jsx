@@ -19,7 +19,6 @@ function RuleManagement({ rules, setRules, onOpen, onCreate, onAdopt, onSelect, 
   const counts = {
     org: orgRules.length,
     library: libRules.length,
-    checkpoints: ELEOS_CHECKPOINTS.length,
     active: orgRules.filter(r => r.status === "active").length,
     draft: orgRules.filter(r => r.status === "draft").length,
     submitted: orgRules.filter(r => r.status === "submitted").length,
@@ -28,7 +27,7 @@ function RuleManagement({ rules, setRules, onOpen, onCreate, onAdopt, onSelect, 
   const visible = (tab === "org" ? orgRules : libRules).filter(r => {
     if (q && !r.name.toLowerCase().includes(q.toLowerCase())) return false;
     if (tab === "org" && statusFilter !== "all" && r.status !== statusFilter) return false;
-    if (docFilter !== "all" && r.docType !== docFilter) return false;
+    if (docFilter !== "all" && r.docType !== docFilter && !(r.docTypes || []).includes(docFilter)) return false;
     if (programFilter !== "all" && !(r.programs || []).includes(programFilter)) return false;
     return true;
   });
@@ -46,11 +45,9 @@ function RuleManagement({ rules, setRules, onOpen, onCreate, onAdopt, onSelect, 
           <p className="sub">Documentation and compliance checks Eleos runs on your clinical notes. Active rules show up in the Dashboard and LQA.</p>
         </div>
         <div className="actions">
-          {tab !== "checkpoints" && (
-            <button className="btn btn-brand" onClick={onCreate}>
-              <Icon name="plus" size={14} /> New rule
-            </button>
-          )}
+          <button className="btn btn-brand" onClick={onCreate}>
+            <Icon name="plus" size={14} /> New rule
+          </button>
         </div>
       </div>
 
@@ -61,19 +58,9 @@ function RuleManagement({ rules, setRules, onOpen, onCreate, onAdopt, onSelect, 
         <button className={`tab ${tab === "library" ? "active" : ""}`} onClick={() => { setTab("library"); setSelectedCheckpointId(null); }}>
           Eleos Library <span className="count">{counts.library}</span>
         </button>
-        <button className={`tab ${tab === "checkpoints" ? "active" : ""}`} onClick={() => { setTab("checkpoints"); onSelect(null); }}>
-          Eleos Checkpoints <span className="count">{counts.checkpoints}</span>
-        </button>
       </div>
 
-      {tab === "checkpoints" ? (
-        <CheckpointsTab
-          checkpoints={ELEOS_CHECKPOINTS}
-          selectedId={selectedCheckpointId}
-          onSelect={setSelectedCheckpointId}
-        />
-      ) : (
-        <>
+      <>
           {/* Library tab context banner */}
           {tab === "library" && (
             <div style={{
@@ -148,7 +135,7 @@ function RuleManagement({ rules, setRules, onOpen, onCreate, onAdopt, onSelect, 
               <tbody>
                 {visible.map(r => (
                   <tr key={r.id} className={selectedId === r.id ? "selected" : ""}
-                      onClick={() => onSelect(r.id)}>
+                      onClick={() => { onSelect(r.id); setSelectedCheckpointId(null); }}>
                     <td>
                       <div className="rule-title">
                         {r.name}
@@ -163,7 +150,16 @@ function RuleManagement({ rules, setRules, onOpen, onCreate, onAdopt, onSelect, 
                         ? <StatusBadge status={r.status} />
                         : <CompatibilityBadge value={r.compatibility} />}
                     </td>
-                    <td><span className="muted small">{r.docType}</span></td>
+                    <td>
+                      {(() => {
+                        const types = r.docTypes?.length > 0 ? r.docTypes : (r.docType ? [r.docType] : []);
+                        return types.length > 0
+                          ? <div style={{display:"flex", flexWrap:"wrap", gap:3}}>
+                              {types.map(dt => <span key={dt} className="muted small" style={{whiteSpace:"nowrap"}}>{dt}</span>)}
+                            </div>
+                          : <span className="muted small">—</span>;
+                      })()}
+                    </td>
                     <td>
                       <div style={{display:"flex", flexWrap:"wrap", gap:4}}>
                         {(r.programs || []).length > 0
@@ -240,7 +236,22 @@ function RuleManagement({ rules, setRules, onOpen, onCreate, onAdopt, onSelect, 
             })()}
           </div>
         </>
-      )}
+
+        {/* ── Eleos Checkpoints section (My Organization tab only) ── */}
+        {tab === "org" && (
+          <div style={{marginTop:36}}>
+            <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:12}}>
+              <h3 style={{margin:0, fontSize:15, fontWeight:600, color:"var(--ink-900)"}}>Eleos Checkpoints</h3>
+              <span className="badge badge-active" style={{fontSize:11}}><span className="dot"></span>Always on</span>
+            </div>
+            <CheckpointsTab
+              checkpoints={ELEOS_CHECKPOINTS}
+              selectedId={selectedCheckpointId}
+              onSelect={(id) => { setSelectedCheckpointId(id); onSelect(null); }}
+            />
+          </div>
+        )}
+      </>
 
       {/* Checkpoint side panel */}
       {selectedCheckpoint && (
@@ -493,8 +504,9 @@ function RuleSidePanel({ rule, rules, setRules, onClose, onAction, onOpenFlow, p
   const status = rule.status;
 
   const startScopeEdit = () => {
+    const existingTypes = rule.docTypes?.length > 0 ? [...rule.docTypes] : (rule.docType ? [rule.docType] : []);
     setScopeDraft({
-      docType: rule.docType || "",
+      docTypes: existingTypes,
       programs: [...(rule.programs || [])],
     });
     setEditingScope(true);
@@ -503,7 +515,7 @@ function RuleSidePanel({ rule, rules, setRules, onClose, onAction, onOpenFlow, p
   const saveScope = () => {
     if (setRules) {
       setRules(rs => rs.map(r => r.id === rule.id
-        ? { ...r, docType: scopeDraft.docType, programs: scopeDraft.programs, lastUpdated: "Just now" }
+        ? { ...r, docTypes: scopeDraft.docTypes, docType: scopeDraft.docTypes[0] || "", programs: scopeDraft.programs, lastUpdated: "Just now" }
         : r
       ));
     }
@@ -720,13 +732,25 @@ function RuleSidePanel({ rule, rules, setRules, onClose, onAction, onOpenFlow, p
             {editingScope ? (
               <div style={{display:"flex", flexDirection:"column", gap:12}}>
                 <div>
-                  <div style={{fontSize:12, fontWeight:600, color:"var(--ink-500)", textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6}}>Note type</div>
-                  <select className="select" style={{maxWidth:280}}
-                          value={scopeDraft.docType}
-                          onChange={e => setScopeDraft({...scopeDraft, docType: e.target.value})}>
-                    <option value="">All note types</option>
-                    {ORG_SCHEMA.docTypes.map(d => <option key={d.name}>{d.name}</option>)}
-                  </select>
+                  <div style={{fontSize:12, fontWeight:600, color:"var(--ink-500)", textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6}}>Note types</div>
+                  <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+                    {ORG_SCHEMA.docTypes.map(d => {
+                      const on = (scopeDraft.docTypes || []).includes(d.name);
+                      return (
+                        <button key={d.name} onClick={() => {
+                          const next = on
+                            ? scopeDraft.docTypes.filter(x => x !== d.name)
+                            : [...(scopeDraft.docTypes || []), d.name];
+                          setScopeDraft({...scopeDraft, docTypes: next});
+                        }}
+                          className={`btn btn-sm ${on ? "btn-brand" : "btn-secondary"}`}
+                          style={{borderRadius:99}}>
+                          {on && <Icon name="check" size={11} />} {d.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="muted small" style={{marginTop:6}}>Leave empty to apply to all note types.</div>
                 </div>
                 <div>
                   <div style={{fontSize:12, fontWeight:600, color:"var(--ink-500)", textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6}}>Programs / services</div>
@@ -750,8 +774,19 @@ function RuleSidePanel({ rule, rules, setRules, onClose, onAction, onOpenFlow, p
               </div>
             ) : (
               <div style={{display:"grid", gridTemplateColumns:"100px 1fr", gap:8, fontSize:13}}>
-                <div className="muted">Note type</div>
-                <div>{rule.docType || "—"}</div>
+                <div className="muted">Note types</div>
+                <div>
+                  {(() => {
+                    const types = rule.docTypes?.length > 0 ? rule.docTypes : (rule.docType ? [rule.docType] : []);
+                    return types.length > 0
+                      ? <div style={{display:"flex", flexWrap:"wrap", gap:4}}>
+                          {types.map(dt => (
+                            <span key={dt} style={{fontSize:11, padding:"1px 7px", borderRadius:99, background:"var(--ink-100)", color:"var(--ink-700)", border:"1px solid var(--ink-150)", fontWeight:500}}>{dt}</span>
+                          ))}
+                        </div>
+                      : <span style={{color:"var(--ink-400)"}}>All note types</span>;
+                  })()}
+                </div>
                 <div className="muted">Programs</div>
                 <div>
                   {(rule.programs || []).length > 0 ? (
